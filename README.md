@@ -26,11 +26,6 @@ código). De eso hablamos en el paso de GitHub.
 
 ## 1. Instalar Visual Studio Code + Python (una sola vez)
 
-Asumo que "Visual Studios" es **Visual Studio Code** (el editor liviano,
-no el "Visual Studio" grande de C#/C++ — son programas distintos). Si
-tienes el grande, igual sirve para editar, pero las instrucciones de
-abajo son para VS Code, que es el estándar para Python.
-
 1. Verifica que tengas Python instalado: abre una terminal (`cmd` o
    PowerShell en Windows, Terminal en Mac) y escribe:
    ```
