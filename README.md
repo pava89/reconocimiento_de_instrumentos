@@ -1,150 +1,98 @@
-# Reconocimiento de instrumentos — Etapa 1
+# Reconocimiento de instrumentos con análisis espectral
 
-Proyecto de Teoría de Señales: reconoce si una nota fue tocada en
-**piano**, **guitarra** o **flauta**, usando el micrófono del computador
-y análisis espectral (FFT).
+Trabajo del curso de Teoría de Señales. Es un programa en Python que escucha una nota por el micrófono del computador y dice si suena a piano, guitarra, flauta o voz. Para decidirlo mira el espectro del sonido (la FFT): cada instrumento reparte su energía de forma distinta entre la frecuencia fundamental y los armónicos, y esa forma es lo que se compara.
 
-## Estructura de carpetas
+Esta es la Etapa 1, con el micrófono del PC. La Etapa 2 pasará a Arduino/ESP32 y un dispositivo de medición más avanzado.
+
+## Cómo funciona
+
+1. Se graba un fragmento de 2 segundos.
+2. Se calcula la FFT y se sacan unas pocas características: frecuencia fundamental, energía de los primeros 6 armónicos y centroide espectral.
+3. Esos números se comparan con un banco de referencia (el promedio de las grabaciones de cada instrumento) y gana el más cercano.
+
+## Carpetas
 
 ```
 proyecto_instrumentos/
-├── README.md
+├── codigo/
+│   ├── grabar_audio.py
+│   ├── analizar_espectro.py
+│   ├── extraer_caracteristicas.py
+│   ├── clasificador.py
+│   ├── main_reconocimiento.py
+│   └── interfaz.py
+├── referencias/        grabaciones de referencia (.wav)
 ├── requirements.txt
-├── referencias/              ← aquí se guardan los .wav de cada instrumento
-└── codigo/
-    ├── grabar_audio.py        (Paso 1: graba desde el micrófono)
-    ├── analizar_espectro.py   (Paso 2: FFT y gráfica del espectro)
-    ├── extraer_caracteristicas.py  (Paso 3: f0, armónicos, centroide)
-    ├── clasificador.py        (Paso 4: banco de referencia y comparación)
-    └── main_reconocimiento.py (Paso 5: todo junto, en vivo)
+└── README.md
 ```
 
-`referencias/` y `codigo/` están separadas a propósito: `codigo/` es lo
-que sube a GitHub como "el programa"; `referencias/` son tus datos
-(grabaciones), que normalmente NO se sube a GitHub (pesan mucho y no es
-código). De eso hablamos en el paso de GitHub.
+## Instalación
 
-## 1. Instalar Visual Studio Code + Python (una sola vez)
+Necesitas Python 3. Desde la carpeta del proyecto:
 
-1. Verifica que tengas Python instalado: abre una terminal (`cmd` o
-   PowerShell en Windows, Terminal en Mac) y escribe:
-   ```
-   python --version
-   ```
-   Si da error, instala Python desde python.org (marca la casilla
-   "Add Python to PATH" durante la instalación).
-2. En VS Code, ve a la pestaña de Extensiones (ícono de cuadrados a la
-   izquierda) e instala la extensión **Python** (de Microsoft).
-
-## 2. Abrir el proyecto en VS Code
-
-1. Descomprime la carpeta `proyecto_instrumentos` en un lugar fácil de
-   encontrar (ej. Escritorio o Documentos).
-2. En VS Code: `Archivo → Abrir carpeta...` y selecciona
-   `proyecto_instrumentos` (la carpeta completa, no un archivo suelto).
-3. Abre una terminal integrada: `Terminal → Nueva terminal`. Debe abrir
-   ya posicionada dentro de `proyecto_instrumentos`.
-
-## 3. Crear un entorno virtual e instalar librerías
-
-Esto evita ensuciar tu instalación general de Python. En la terminal
-que abriste dentro de VS Code:
-
-```bash
+```powershell
 python -m venv venv
-```
-
-Luego actívalo:
-- Windows: `venv\Scripts\activate`
-- Mac/Linux: `source venv/bin/activate`
-
-Deberías ver `(venv)` al inicio de la línea de la terminal. Con eso
-activado, instala las librerías:
-
-```bash
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-(VS Code puede preguntarte "¿quieres usar este entorno como intérprete
-del proyecto?" — dile que sí / "Select interpreter" y elige el que
-tiene `venv` en la ruta.)
+## Uso
 
-## 4. Qué va a pasar al correr cada paso (con tus 3 instrumentos)
+Todo se corre desde la carpeta raíz del proyecto.
 
-Todo se ejecuta **desde la carpeta raíz** `proyecto_instrumentos/`
-(no entres a `codigo/`), así:
+Primero hay que grabar las referencias, dos por instrumento y siempre la misma nota (yo usé Re). La grabación empieza apenas presionas Enter, así que toca la nota justo ahí y déjala sonar.
 
-**Paso 1 — Grabar.** Toca la misma nota (ej. La en la escala media) en
-cada instrumento, dos veces cada uno:
-
-```bash
-python codigo/grabar_audio.py referencias/piano_1.wav
-python codigo/grabar_audio.py referencias/piano_2.wav
-python codigo/grabar_audio.py referencias/guitarra_1.wav
-python codigo/grabar_audio.py referencias/guitarra_2.wav
-python codigo/grabar_audio.py referencias/flauta_1.wav
-python codigo/grabar_audio.py referencias/flauta_2.wav
+```powershell
+python codigo\grabar_audio.py referencias\piano_1.wav
+python codigo\grabar_audio.py referencias\piano_2.wav
+python codigo\grabar_audio.py referencias\guitarra_1.wav
+python codigo\grabar_audio.py referencias\guitarra_2.wav
+python codigo\grabar_audio.py referencias\flauta_1.wav
+python codigo\grabar_audio.py referencias\flauta_2.wav
+python codigo\grabar_audio.py referencias\voz_1.wav
+python codigo\grabar_audio.py referencias\voz_2.wav
 ```
-Qué pasa: la terminal dice "Grabando 2.0 s... toca la nota ahora" y se
-queda esperando 2 segundos grabando con tu micrófono; al terminar
-guarda el archivo `.wav` dentro de `referencias/`. No abre ninguna
-ventana, todo pasa en la terminal.
 
-**Paso 2 — Ver el espectro (opcional pero recomendado).**
-```bash
-python codigo/analizar_espectro.py referencias/piano_1.wav
+Si quieres ver cómo se ve el espectro de una grabación:
+
+```powershell
+python codigo\analizar_espectro.py referencias\piano_1.wav
 ```
-Qué pasa: se abre una ventana con una gráfica (usa `matplotlib`). Verás
-un pico alto (la fundamental) y picos más chicos a la derecha
-(armónicos). Cierra la ventana para que la terminal quede libre de
-nuevo. Repite con `guitarra_1.wav` y `flauta_1.wav` y compara las tres
-formas — ahí vas a *ver* por qué se pueden distinguir.
 
-**Paso 3 — Ver los números extraídos (opcional, para entender).**
-```bash
-python codigo/extraer_caracteristicas.py referencias/piano_1.wav
+Para reconocer un instrumento por la terminal:
+
+```powershell
+python codigo\main_reconocimiento.py
 ```
-Qué pasa: imprime en la terminal un resumen tipo:
+
+La primera vez arma el banco de referencia y lo guarda en `banco_referencia.json`. Si cambias o agregas grabaciones, borra ese archivo para que se recalcule.
+
+### Interfaz
+
+Hay una ventana sencilla, hecha con tkinter (viene con Python), que muestra el resultado en grande con un ícono en vez de dejarlo solo en la terminal:
+
+```powershell
+python codigo\interfaz.py
 ```
-f0: 440.3
-armonicos: [1.0, 0.42, 0.18, ...]
-centroide: 1523.7
-energia_total: 8.9
-```
-Sin ventanas, solo texto.
 
-**Paso 5 — El reconocimiento completo (el que de verdad importa).**
-```bash
-python codigo/main_reconocimiento.py
-```
-Qué pasa, en orden:
-1. Como es la primera vez, no existe `banco_referencia.json`, así que
-   el programa lee tus 6 archivos de `referencias/` (2 por
-   instrumento), calcula sus características y guarda el promedio de
-   cada instrumento en ese archivo. Verás en pantalla:
-   `Banco de referencia listo: ['piano', 'guitarra', 'flauta']`
-2. Inmediatamente pide grabar una muestra nueva ("toca la nota ahora")
-   — toca cualquiera de los tres instrumentos.
-3. Compara esa grabación contra el banco y al final imprime, por
-   ejemplo: `Instrumento reconocido: guitarra`.
+Presionas "Grabar y reconocer", tocas la nota y aparece el instrumento detectado. Usa el mismo banco y la misma lógica que `main_reconocimiento.py`.
 
-Para volver a probar con otro instrumento, corre
-`python codigo/main_reconocimiento.py` otra vez (como
-`banco_referencia.json` ya existe, esta vez se salta directo a grabar
-la muestra nueva).
+## Resultados
 
-## 5. Cosas que probablemente fallen la primera vez (y cómo arreglarlas)
+Probé 16 veces cada instrumento, tocando la misma nota:
 
-- **`sounddevice` no encuentra micrófono / da error de dispositivo**:
-  revisa en Windows que el micrófono tenga permisos de acceso para
-  aplicaciones de escritorio (Configuración → Privacidad → Micrófono).
-- **`ModuleNotFoundError: No module named 'librosa'` (o cualquier otra)**:
-  significa que el entorno virtual no está activado, o instalaste las
-  librerías fuera de él. Verifica que la terminal muestre `(venv)` y
-  vuelve a correr `pip install -r requirements.txt`.
-- **El reconocimiento se equivoca mucho**: normal al principio — prueba
-  grabando más cerca del instrumento, con menos ruido de fondo, y
-  usando siempre la misma nota para el banco de referencia.
+| Instrumento | Aciertos | Intentos | Acierto |
+|---|---|---|---|
+| Piano | 16 | 16 | 100 % |
+| Guitarra | 14 | 16 | 87,5 % |
+| Flauta | 16 | 16 | 100 % |
+| Voz | 15 | 16 | 93,75 % |
+| Total | 61 | 64 | 95,3 % |
 
-Cuando esto ya corra bien en tu computador con tus tres instrumentos,
-seguimos con el paso de subirlo a GitHub.
+## Limitaciones
+
+- Funciona bien con la nota con la que se hizo el banco. Cuando canté otra nota, el programa la clasificó como piano.
+- Son solo dos grabaciones de referencia por instrumento, así que el promedio es poco estable.
+- Las pruebas se hicieron con un solo micrófono, en un solo lugar y con un solo intérprete por instrumento.
+
+Para mejorarlo habría que ampliar el banco con más notas y más grabaciones por instrumento.
