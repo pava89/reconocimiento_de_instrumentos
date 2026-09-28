@@ -1,0 +1,4 @@
+venv/
+__pycache__/
+muestra_nueva.wav
+banco_referencia.json
