@@ -1,10 +1,10 @@
-Reconocimiento de instrumentos con análisis espectral
+# Reconocimiento de instrumentos con análisis espectral
 
 Trabajo del curso de Teoría de Señales. Es un programa en Python que escucha una nota por el micrófono del computador y dice si suena a piano, guitarra, flauta o voz. Para decidirlo mira el espectro del sonido (la FFT): cada instrumento reparte su energía de forma distinta entre la frecuencia fundamental y los armónicos, y esa forma es lo que se compara.
 
 Esta es la Etapa 1, con el micrófono del PC. La Etapa 2 pasará a Arduino/ESP32 y un dispositivo de medición más avanzado.
 
-Cómo funciona
+ ## Cómo funciona
 
 1. Se graba un fragmento de 2 segundos.
 2. Se calcula la FFT y se sacan unas pocas características: frecuencia fundamental, energía de los primeros 6 armónicos y centroide espectral.
