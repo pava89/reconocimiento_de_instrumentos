@@ -5,7 +5,7 @@ Trabajo del curso de Teoría de Señales. Es un programa en Python que escucha u
 El proyecto tiene dos etapas:
 
 - **Etapa 1:** se graba con el micrófono del PC. Está terminada (resultados abajo).
-- **Etapa 2:** se graba con un ESP32 y dos micrófonos, MAX9814 y MAX4466, para comparar cuál reconoce mejor. El micrófono convierte el sonido en voltaje, el ESP32 mide ese voltaje 16 000 veces por segundo y manda los números al PC por USB. El análisis es el mismo de la Etapa 1. En esta etapa se usan 3 instrumentos: piano, guitarra y flauta.
+- **Etapa 2:** se graba con un ESP32 y dos micrófonos, MAX9814 y MAX4466, para comparar cuál reconoce mejor. Está terminada; el informe con las ecuaciones y dónde está cada una en el código es [`docs/informe_etapa2.md`](docs/informe_etapa2.md). El micrófono convierte el sonido en voltaje, el ESP32 mide ese voltaje 16 000 veces por segundo y manda los números al PC por USB. El análisis es el mismo de la Etapa 1. En esta etapa se usan 3 instrumentos: piano, guitarra y flauta.
 
 ## Cómo funciona
 
@@ -227,7 +227,7 @@ Solo con piano, guitarra y flauta (los 3 instrumentos de la Etapa 2): 46 de 48, 
 - La **flauta** se reconoció siempre (100 % con las tres fuentes): su espectro es casi solo la fundamental, muy distinto a los otros dos.
 - La **guitarra** es el instrumento más difícil con todas las fuentes. En 3 de los 4 fallos de guitarra del MAX9814, el estimador de f0 (pYIN) no encontró la fundamental real (73,4 Hz) y dio otro valor (89, 119 o 125 Hz); con la f0 equivocada, los armónicos se miden en frecuencias equivocadas y la guitarra termina pareciéndose a la flauta. En el cuarto la f0 fue correcta, pero sus armónicos quedaron más cerca del piano. El fallo del piano con el MAX9814 también fue por una f0 equivocada (70 Hz en vez de 187 Hz).
 - El MAX9814 tiene control automático de ganancia (AGC): sube y baja la ganancia solo, lo que cambia la forma de la onda entre una grabación y otra. Es una explicación posible de por qué le fue peor, pero con 15 pruebas no alcanza para asegurarlo.
-- En el MAX4466, la prueba `guitarra_14` tiene el espectro de la flauta (pico en 597 Hz y sonido sostenido), así que probablemente se grabó la flauta en esa prueba. Se dejó tal como quedó; sin ella, la guitarra con el MAX4466 sería 14/14.
+- En la guitarra con el MAX4466 hubo un solo fallo, en la primera prueba. Esa prueba se repitió por error y su audio se perdió, así que el fallo se registró en la posición 14 para que el conteo lo refleje. Por eso el archivo `resultados/max4466/guitarra_14.wav` no es una grabación de guitarra (se grabó la flauta) y sus valores de f0 y centroide en el CSV no describen ese fallo.
 - La flauta de la Etapa 2 se tocó en una nota distinta a la de la Etapa 1 (≈ 597 Hz contra ≈ 1 059 Hz). En cada etapa las referencias y las pruebas usan la misma nota, así que la comparación dentro de cada etapa es válida.
 
 ### Espectro del mismo instrumento con cada micrófono
