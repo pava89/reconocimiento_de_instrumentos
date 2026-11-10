@@ -2,3 +2,6 @@ venv/
 __pycache__/
 muestra_nueva.wav
 banco_referencia.json
+banco_max9814.json
+banco_max4466.json
+resultados/**/*.wav
