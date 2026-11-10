@@ -25,7 +25,8 @@ proyecto_instrumentos/
 │   ├── main_reconocimiento.py
 │   ├── interfaz.py
 │   ├── grabar_esp32.py       recibe el audio del ESP32 (Etapa 2)
-│   └── evaluar.py            hace las pruebas de acierto y arma la tabla
+│   ├── evaluar.py            hace las pruebas de acierto y arma la tabla
+│   └── generar_graficas.py   genera todas las gráficas de la carpeta graficas/
 ├── esp32/                    programas que se cargan al ESP32 con el Arduino IDE
 │   ├── prueba_microfono/
 │   └── captura_audio/
@@ -33,6 +34,11 @@ proyecto_instrumentos/
 ├── referencias_max9814/      grabaciones de referencia con el MAX9814
 ├── referencias_max4466/      grabaciones de referencia con el MAX4466
 ├── resultados/               pruebas de acierto (CSV) y sus audios
+├── graficas/
+│   ├── pc/                   forma de onda y espectro de cada referencia de la Etapa 1
+│   ├── max9814/              lo mismo con las referencias del MAX9814
+│   ├── max4466/              lo mismo con las referencias del MAX4466
+│   └── comparacion/          acierto por micrófono, matrices de confusión y espectros comparados
 ├── requirements.txt
 └── README.md
 ```
@@ -46,6 +52,8 @@ python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
+
+En Windows 11, si al usar librosa aparece `ImportError: DLL load failed ... Una directiva de Control de aplicaciones bloqueó este archivo`, es Smart App Control bloqueando numba (lo usa librosa por dentro). Se desactiva en Seguridad de Windows → Control de aplicaciones y navegador → Configuración de Smart App Control, y se puede volver a activar al terminar.
 
 ## Uso
 
@@ -159,7 +167,7 @@ python codigo\grabar_esp32.py --micro max9814 referencias_max9814\flauta_2.wav
 
 Para el MAX4466 son los mismos comandos con `--micro max4466` y la carpeta `referencias_max4466`.
 
-El puerto del ESP32 se busca solo. Si no lo encuentra, `python codigo\grabar_esp32.py --listar` muestra los puertos y se le indica con `--puerto COM5`. Después de cada grabación el programa muestra el rango de voltaje que llegó y avisa si la señal se saturó o es muy débil. Si se cambian las referencias, hay que borrar el `banco_*.json` de ese micrófono para que se recalcule.
+Antes de grabar sale una cuenta regresiva (3, 2, 1, ¡YA!) y la grabación empieza justo en el ¡YA!, para que la nota ocupe los 2 segundos completos. El puerto del ESP32 se busca solo. Si no lo encuentra, `python codigo\grabar_esp32.py --listar` muestra los puertos y se le indica con `--puerto COM5`. Después de cada grabación el programa muestra el rango de voltaje que llegó y avisa si la señal se saturó o es muy débil. Si se cambian las referencias, hay que borrar el `banco_*.json` de ese micrófono para que se recalcule.
 
 ### Reconocer y evaluar
 
@@ -194,10 +202,58 @@ Probé 16 veces cada instrumento, tocando la misma nota:
 | Voz | 15 | 16 | 93,75 % |
 | Total | 61 | 64 | 95,3 % |
 
+Solo con piano, guitarra y flauta (los 3 instrumentos de la Etapa 2): 46 de 48, **95,8 %**.
+
+## Resultados de la Etapa 2
+
+15 pruebas por instrumento con cada micrófono, la misma nota de las referencias, con el banco de referencia propio de cada micrófono. Los datos de cada prueba (instrumento tocado, reconocido, f0 y centroide) están en `resultados/resultados_max9814.csv` y `resultados/resultados_max4466.csv`.
+
+| Instrumento | Micrófono del PC (Etapa 1) | ESP32 + MAX9814 | ESP32 + MAX4466 |
+|---|---|---|---|
+| Piano | 16/16 (100 %) | 14/15 (93,3 %) | 15/15 (100 %) |
+| Guitarra | 14/16 (87,5 %) | 11/15 (73,3 %) | 14/15 (93,3 %) |
+| Flauta | 16/16 (100 %) | 15/15 (100 %) | 15/15 (100 %) |
+| **Total** | **46/48 (95,8 %)** | **40/45 (88,9 %)** | **44/45 (97,8 %)** |
+
+![Acierto por instrumento y micrófono](graficas/comparacion/acierto_por_fuente.png)
+
+| MAX9814 | MAX4466 |
+|---|---|
+| ![Matriz de confusión MAX9814](graficas/comparacion/matriz_confusion_max9814.png) | ![Matriz de confusión MAX4466](graficas/comparacion/matriz_confusion_max4466.png) |
+
+### Qué se observó
+
+- El **MAX4466** fue el mejor de los tres (97,8 %), incluso un poco por encima del micrófono del PC. El **MAX9814** fue el más bajo (88,9 %).
+- La **flauta** se reconoció siempre (100 % con las tres fuentes): su espectro es casi solo la fundamental, muy distinto a los otros dos.
+- La **guitarra** es el instrumento más difícil con todas las fuentes. En 3 de los 4 fallos de guitarra del MAX9814, el estimador de f0 (pYIN) no encontró la fundamental real (73,4 Hz) y dio otro valor (89, 119 o 125 Hz); con la f0 equivocada, los armónicos se miden en frecuencias equivocadas y la guitarra termina pareciéndose a la flauta. En el cuarto la f0 fue correcta, pero sus armónicos quedaron más cerca del piano. El fallo del piano con el MAX9814 también fue por una f0 equivocada (70 Hz en vez de 187 Hz).
+- El MAX9814 tiene control automático de ganancia (AGC): sube y baja la ganancia solo, lo que cambia la forma de la onda entre una grabación y otra. Es una explicación posible de por qué le fue peor, pero con 15 pruebas no alcanza para asegurarlo.
+- En el MAX4466, la prueba `guitarra_14` tiene el espectro de la flauta (pico en 597 Hz y sonido sostenido), así que probablemente se grabó la flauta en esa prueba. Se dejó tal como quedó; sin ella, la guitarra con el MAX4466 sería 14/14.
+- La flauta de la Etapa 2 se tocó en una nota distinta a la de la Etapa 1 (≈ 597 Hz contra ≈ 1 059 Hz). En cada etapa las referencias y las pruebas usan la misma nota, así que la comparación dentro de cada etapa es válida.
+
+### Espectro del mismo instrumento con cada micrófono
+
+Promedio de las dos referencias, normalizado al pico más alto. Los picos (armónicos) caen en las mismas frecuencias con los tres micrófonos; lo que cambia es la altura relativa de cada uno, que es justo lo que usa el clasificador.
+
+![Espectro del piano](graficas/comparacion/espectro_piano.png)
+![Espectro de la guitarra](graficas/comparacion/espectro_guitarra.png)
+![Espectro de la flauta](graficas/comparacion/espectro_flauta.png)
+
+### Gráficas de cada referencia
+
+Cada grabación de referencia tiene su gráfica con la forma de onda y el espectro en `graficas/pc/`, `graficas/max9814/` y `graficas/max4466/`. Para volver a generarlas todas:
+
+```powershell
+python codigo\generar_graficas.py
+```
+
+Los audios de cada prueba (`resultados/<fuente>/*.wav`) se quedan en el computador y no se suben al repositorio; los resultados de cada uno están en los CSV.
+
 ## Limitaciones
 
 - Funciona bien con la nota con la que se hizo el banco. Cuando canté otra nota, el programa la clasificó como piano.
 - Son solo dos grabaciones de referencia por instrumento, así que el promedio es poco estable.
-- Las pruebas se hicieron con un solo micrófono, en un solo lugar y con un solo intérprete por instrumento.
+- Las pruebas se hicieron en un solo lugar y con un solo intérprete por instrumento.
+- La f0 que da pYIN a veces sale en otra octava o en un valor equivocado, sobre todo con la guitarra, y eso causa la mayoría de los fallos.
+- 15 pruebas por instrumento son pocas: una sola prueba cambia el resultado en 6,7 puntos.
 
 Para mejorarlo habría que ampliar el banco con más notas y más grabaciones por instrumento.

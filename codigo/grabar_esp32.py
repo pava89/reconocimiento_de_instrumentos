@@ -117,6 +117,13 @@ def recibir_muestras(microfono="max9814", puerto=None, al_empezar=None):
     with ser:
         _esperar_esp32(ser)
         ser.timeout = 10
+        if not al_empezar:
+            # Cuenta regresiva en la terminal: así se puede tocar la nota justo
+            # cuando empieza la grabación, y no un segundo tarde.
+            print(f"Grabación con el {microfono.upper()}. Toca la nota cuando salga ¡YA!")
+            for numero in (3, 2, 1):
+                print(f"  {numero}...", flush=True)
+                time.sleep(0.7)
         ser.write(MICROFONOS[microfono])
 
         while True:
@@ -130,7 +137,7 @@ def recibir_muestras(microfono="max9814", puerto=None, al_empezar=None):
                 if al_empezar:
                     al_empezar()
                 else:
-                    print(f"Grabando 2 s con el {microfono.upper()}... toca la nota ahora.")
+                    print("  ¡YA! (grabando 2 s)", flush=True)
             elif linea.startswith("DATOS"):
                 _, n, fs_real, atrasos = linea.split()
                 n, fs_real, atrasos = int(n), float(fs_real), int(atrasos)
@@ -157,8 +164,11 @@ def revisar_senal(muestras, fs_real, atrasos):
         f"Rango del ADC: {minimo} a {maximo} (de 0 a {MAX_ADC}), "
         f"aprox. {minimo / MAX_ADC * VREF_APROX:.2f} V a {maximo / MAX_ADC * VREF_APROX:.2f} V"
     )
-    if minimo <= 5 or maximo >= MAX_ADC - 5:
-        print("Aviso: la señal se saturó (llegó al límite del ADC). Aleja el instrumento o toca más suave.")
+    # Una o dos muestras en el límite no dañan el espectro; muchas sí.
+    en_el_limite = int(np.sum((muestras <= 5) | (muestras >= MAX_ADC - 5)))
+    if en_el_limite > 20:
+        print(f"Aviso: la señal se saturó ({en_el_limite} muestras llegaron al límite del ADC). "
+              "Aleja el instrumento o toca más suave.")
     if maximo - minimo < 100:
         print("Aviso: la señal es muy débil. Acerca el instrumento o revisa las conexiones del micrófono.")
     if atrasos > 0.05 * len(muestras) or fs_real < 0.97 * FS_OBJETIVO:
