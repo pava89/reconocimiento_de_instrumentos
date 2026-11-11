@@ -164,4 +164,4 @@ Nota sobre el MAX4466: el único fallo de guitarra ocurrió en la primera prueba
 
 - Una sola nota por instrumento, un solo intérprete y un solo lugar.
 - Solo 2 referencias por instrumento; una prueba cambia el acierto en 6,7 puntos.
-- La flauta se tocó en una nota distinta a la de la Etapa 1 (≈ 597 Hz contra ≈ 1 059 Hz). Dentro de cada etapa, referencias y pruebas usan la misma nota.
+- La flauta se tocó con la misma nota, Re, pero en registros distintos: alto en la Etapa 1 (f0 ≈ 1 057 Hz) y bajo en la Etapa 2 (f0 ≈ 595 Hz). Dentro de cada etapa, referencias y pruebas usan el mismo registro.
