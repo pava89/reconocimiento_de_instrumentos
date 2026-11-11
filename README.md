@@ -4,7 +4,7 @@ Trabajo del curso de Teoría de Señales. Es un programa en Python que escucha u
 
 El proyecto tiene dos etapas:
 
-- **Etapa 1:** se graba con el micrófono del PC. Está terminada (resultados abajo).
+- **Etapa 1:** se graba con el micrófono del PC. Está terminada (resultados abajo). Su versión entregada, sin cambios, está en la carpeta [`etapa1/`](etapa1/).
 - **Etapa 2:** se graba con un ESP32 y dos micrófonos, MAX9814 y MAX4466, para comparar cuál reconoce mejor. Está terminada; el informe con las ecuaciones y dónde está cada una en el código es [`docs/informe_etapa2.md`](docs/informe_etapa2.md). El micrófono convierte el sonido en voltaje, el ESP32 mide ese voltaje 16 000 veces por segundo y manda los números al PC por USB. El análisis es el mismo de la Etapa 1. En esta etapa se usan 3 instrumentos: piano, guitarra y flauta.
 
 ## Cómo funciona
@@ -17,6 +17,7 @@ El proyecto tiene dos etapas:
 
 ```
 proyecto_instrumentos/
+├── etapa1/                  copia exacta de la Etapa 1 tal como se entregó (código, referencias y README)
 ├── codigo/
 │   ├── grabar_audio.py
 │   ├── analizar_espectro.py
